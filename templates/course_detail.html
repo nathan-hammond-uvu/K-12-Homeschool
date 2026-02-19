@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.course_name }} - K-12 Course Catalog{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4">
+        <a href="/" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Catalog
+        </a>
+    </div>
+
+    <div class="course-detail-header mb-5">
+        <h1 class="display-4">{{ course.course_name }}</h1>
+        
+        <div class="course-metadata mt-3">
+            <span class="badge bg-primary me-2">{{ course.course_code }}</span>
+            {% if course.is_required %}
+            <span class="badge bg-danger me-2">Required</span>
+            {% else %}
+            <span class="badge bg-info me-2">Elective</span>
+            {% endif %}
+            {% if course.credits > 0 %}
+            <span class="badge bg-success me-2">{{ course.credits }} Credit(s)</span>
+            {% endif %}
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <p><strong>Course Description:</strong> {{ course.course_description }}</p>
+                <p><strong>Course Category:</strong> {{ course.course_category }}</p>
+                <p><strong>Course Level:</strong> {{ course.course_level }}</p>
+            </div>
+            <div class="col-md-6">
+                {% if course.age_group %}
+                <p><strong>Age Group:</strong> {{ course.age_group }}</p>
+                {% endif %}
+                {% if course.school_year %}
+                <p><strong>School Year:</strong> {{ course.school_year }}</p>
+                {% endif %}
+                <p><strong>Required:</strong> {{ 'Yes' if course.is_required else 'No' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Learning Objectives -->
+    <section class="mb-5">
+        <h2><i class="fas fa-bullseye me-2 text-primary"></i>Learning Objectives</h2>
+        <ul class="list-group list-group-flush">
+            {% for objective in course.learning_objectives %}
+            <li class="list-group-item"><i class="fas fa-check-circle me-2 text-success"></i>{{ objective }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- Modules -->
+    <section class="mb-5">
+        <h2><i class="fas fa-book me-2 text-primary"></i>Modules</h2>
+        
+        <div class="accordion" id="modulesAccordion">
+            {% for module in modules %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ module.number }}">
+                    <button class="accordion-button {% if module.number != 1 %}collapsed{% endif %}" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#collapse{{ module.number }}" 
+                            aria-expanded="{% if module.number == 1 %}true{% else %}false{% endif %}" 
+                            aria-controls="collapse{{ module.number }}">
+                        <i class="fas fa-star me-2"></i>
+                        <strong>{{ module.title }}</strong>
+                    </button>
+                </h2>
+                <div id="collapse{{ module.number }}" 
+                     class="accordion-collapse collapse {% if module.number == 1 %}show{% endif %}" 
+                     aria-labelledby="heading{{ module.number }}" 
+                     data-bs-parent="#modulesAccordion">
+                    <div class="accordion-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h5><i class="fas fa-lightbulb me-2 text-warning"></i>Topics</h5>
+                                <ol>
+                                    {% for topic in module.topics %}
+                                    <li>{{ topic }}</li>
+                                    {% endfor %}
+                                </ol>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h5><i class="fas fa-comments me-2 text-info"></i>Discussions</h5>
+                                <ol>
+                                    {% for discussion in module.discussions %}
+                                    <li>{{ discussion }}</li>
+                                    {% endfor %}
+                                </ol>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h5><i class="fas fa-file-alt me-2 text-primary"></i>Assignments</h5>
+                                <ol>
+                                    {% for assignment in module.assignments %}
+                                    <li>{{ assignment }}</li>
+                                    {% endfor %}
+                                </ol>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h5><i class="fas fa-clipboard-check me-2 text-success"></i>Quizzes</h5>
+                                <ol>
+                                    {% for quiz in module.quizzes %}
+                                    <li>{{ quiz }}</li>
+                                    {% endfor %}
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <hr>
+
+    <!-- Final Module -->
+    <section class="mb-5">
+        <h2><i class="fas fa-flag-checkered me-2 text-primary"></i>Final Module</h2>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-check-square me-2"></i>Final Exam</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>Review Material</li>
+                    <li>Study Guide</li>
+                    <li>Final Exam: <em>{{ course.course_name }}</em></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="fas fa-crown me-2"></i>Capstone Project</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Project:</strong> {{ course.capstone }}</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="text-center mt-5">
+        <a href="/" class="btn btn-primary btn-lg">
+            <i class="fas fa-arrow-left me-2"></i>Back to Catalog
+        </a>
+    </div>
+</div>
+{% endblock %}

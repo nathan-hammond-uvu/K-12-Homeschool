@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Sidebar Filter -->
+        <aside class="col-md-3 col-lg-2 sidebar bg-light border-end">
+            <div class="filter-section">
+                <h4 class="filter-title">
+                    <i class="fas fa-filter me-2"></i>Filters
+                </h4>
+                
+                <!-- Search Bar -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Search</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search courses...">
+                </div>
+
+                <!-- Category Filter -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Category</label>
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Level Filter -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Level</label>
+                    <select id="levelFilter" class="form-select">
+                        <option value="">All Levels</option>
+                        {% for level in levels %}
+                        <option value="{{ level }}">{{ level }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- School Year Filter -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">School Year</label>
+                    <select id="schoolYearFilter" class="form-select">
+                        <option value="">All Years</option>
+                        {% for year in school_years %}
+                        <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                        <option value="elective">Electives</option>
+                    </select>
+                </div>
+
+                <!-- Required Filter -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Course Type</label>
+                    <select id="requiredFilter" class="form-select">
+                        <option value="">All Courses</option>
+                        <option value="true">Required Only</option>
+                        <option value="false">Electives Only</option>
+                    </select>
+                </div>
+
+                <!-- Clear Filters Button -->
+                <button id="clearFilters" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-times me-2"></i>Clear Filters
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="col-md-9 col-lg-10 main-area">
+            <div class="container-fluid py-4">
+                <h1 class="mb-4">Course Catalog</h1>
+                <p class="text-muted mb-4">Browse our comprehensive K-12 course offerings</p>
+                
+                <div id="courseCount" class="mb-3 text-muted"></div>
+                
+                <div id="courseGrid" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {% for course in courses %}
+                    <div class="col course-card-wrapper" 
+                         data-category="{{ course.course_category }}"
+                         data-level="{{ course.course_level }}"
+                         data-school-year="{{ course.school_year or 'null' }}"
+                         data-required="{{ course.is_required|lower }}"
+                         data-search="{{ (course.course_code + ' ' + course.course_name + ' ' + course.course_description)|lower }}">
+                        <div class="card course-card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title course-code">{{ course.course_code }}</h5>
+                                    {% if course.is_required %}
+                                    <span class="badge bg-danger">Required</span>
+                                    {% else %}
+                                    <span class="badge bg-info">Elective</span>
+                                    {% endif %}
+                                </div>
+                                <h6 class="card-subtitle mb-3 text-primary">{{ course.course_name }}</h6>
+                                <p class="card-text course-description">{{ course.course_description }}</p>
+                                
+                                <div class="course-meta mt-3">
+                                    <small class="d-block text-muted">
+                                        <i class="fas fa-tag me-1"></i>{{ course.course_category }}
+                                    </small>
+                                    <small class="d-block text-muted">
+                                        <i class="fas fa-layer-group me-1"></i>{{ course.course_level }}
+                                    </small>
+                                    {% if course.school_year %}
+                                    <small class="d-block text-muted">
+                                        <i class="fas fa-calendar me-1"></i>{{ course.school_year }} Grade
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="/course/{{ course.course_code }}" class="btn btn-primary btn-sm w-100">
+                                    View Details <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div id="noResults" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4>No courses found</h4>
+                    <p class="text-muted">Try adjusting your filters or search terms</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filter functionality
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const levelFilter = document.getElementById('levelFilter');
+    const schoolYearFilter = document.getElementById('schoolYearFilter');
+    const requiredFilter = document.getElementById('requiredFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const courseCards = document.querySelectorAll('.course-card-wrapper');
+    const courseCount = document.getElementById('courseCount');
+    const noResults = document.getElementById('noResults');
+
+    function filterCourses() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const category = categoryFilter.value;
+        const level = levelFilter.value;
+        const schoolYear = schoolYearFilter.value;
+        const required = requiredFilter.value;
+
+        let visibleCount = 0;
+
+        courseCards.forEach(card => {
+            const cardCategory = card.dataset.category;
+            const cardLevel = card.dataset.level;
+            const cardSchoolYear = card.dataset.schoolYear;
+            const cardRequired = card.dataset.required;
+            const cardSearch = card.dataset.search;
+
+            let showCard = true;
+
+            if (searchTerm && !cardSearch.includes(searchTerm)) {
+                showCard = false;
+            }
+
+            if (category && cardCategory !== category) {
+                showCard = false;
+            }
+
+            if (level && cardLevel !== level) {
+                showCard = false;
+            }
+
+            if (schoolYear) {
+                if (schoolYear === 'elective' && cardSchoolYear !== 'null') {
+                    showCard = false;
+                } else if (schoolYear !== 'elective' && cardSchoolYear !== schoolYear) {
+                    showCard = false;
+                }
+            }
+
+            if (required && cardRequired !== required) {
+                showCard = false;
+            }
+
+            if (showCard) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Update course count
+        courseCount.textContent = `Showing ${visibleCount} of ${courseCards.length} courses`;
+
+        // Show/hide no results message
+        if (visibleCount === 0) {
+            noResults.style.display = 'block';
+        } else {
+            noResults.style.display = 'none';
+        }
+    }
+
+    function clearFilters() {
+        searchInput.value = '';
+        categoryFilter.value = '';
+        levelFilter.value = '';
+        schoolYearFilter.value = '';
+        requiredFilter.value = '';
+        filterCourses();
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', filterCourses);
+    categoryFilter.addEventListener('change', filterCourses);
+    levelFilter.addEventListener('change', filterCourses);
+    schoolYearFilter.addEventListener('change', filterCourses);
+    requiredFilter.addEventListener('change', filterCourses);
+    clearFiltersBtn.addEventListener('click', clearFilters);
+
+    // Initial count
+    filterCourses();
+</script>
+{% endblock %}
